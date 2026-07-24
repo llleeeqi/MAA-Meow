@@ -24,12 +24,13 @@ class RemoteWebSettings(context: Context) {
     val config: StateFlow<RemoteWebConfig> = _config.asStateFlow()
 
     fun save(enabled: Boolean, portText: String, password: String): Result<RemoteWebConfig> = runCatching {
-        require(password.length >= 8) { "访问密码至少需要 8 个字符" }
+        val persistedPassword = if (enabled) password else ""
+        require(!enabled || persistedPassword.length >= 8) { "访问密码至少需要 8 个字符" }
         val port = portText.toIntOrNull() ?: throw IllegalArgumentException("端口必须是数字")
         require(port in RemoteWebConfig.MIN_PORT..RemoteWebConfig.MAX_PORT) {
             "端口范围为 ${RemoteWebConfig.MIN_PORT}-${RemoteWebConfig.MAX_PORT}"
         }
-        val next = RemoteWebConfig(enabled, port, password)
+        val next = RemoteWebConfig(enabled, port, persistedPassword)
         preferences.edit()
             .putBoolean("enabled", next.enabled)
             .putInt("port", next.port)

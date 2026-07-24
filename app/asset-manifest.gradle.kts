@@ -52,19 +52,12 @@ val generateAssetManifest by tasks.registering(GenerateAssetManifestTask::class)
 
     val assetsDir = layout.projectDirectory.dir("src/main/assets")
     val assetSourceDirName = "MaaSync/MaaResource"
-    //检查 MaaSync/MaaResource 目录
-    doFirst {
-        val targetDir = File(assetsDir.asFile, assetSourceDirName)
-        if (!targetDir.exists()) {
-            logger.lifecycle("Creating directory: ${targetDir.absolutePath}")
-            targetDir.mkdirs()
-        } else {
-            logger.lifecycle("Directory already exists: ${targetDir.absolutePath}")
-        }
-    }
+    // Gradle validates @InputDirectory before doFirst runs. Fresh clones do not
+    // include MaaResource, because the app can download it on first launch.
+    val targetDir = File(assetsDir.asFile, assetSourceDirName).apply { mkdirs() }
 
     assetSourceDir.set(assetSourceDirName)
-    sourceDir.set(assetsDir.dir(assetSourceDirName))
+    sourceDir.set(targetDir)
     manifestFile.set(assetsDir.file("MaaSync/asset_manifest.json"))
 }
 

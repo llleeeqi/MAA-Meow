@@ -7,6 +7,7 @@ import fi.iki.elonen.NanoHTTPD
 import kotlinx.coroutines.runBlocking
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
+import java.io.File
 import java.nio.charset.StandardCharsets
 
 /**
@@ -84,7 +85,9 @@ class RemoteWebServerManager(
         private fun importConfig(session: IHTTPSession): Response {
             val files = HashMap<String, String>()
             session.parseBody(files)
-            val body = files["postData"].orEmpty()
+            // NanoHTTPD stores raw POST JSON directly in postData, but stores a
+            // PUT request body in a temporary file under the content key.
+            val body = files["postData"] ?: files["content"]?.let(::File)?.readText().orEmpty()
             require(body.isNotBlank()) { "配置内容不能为空" }
             runBlocking { backupManager.importFrom(ByteArrayInputStream(body.toByteArray(StandardCharsets.UTF_8))) }
             return newFixedLengthResponse(Response.Status.OK, "application/json", "{\"ok\":true}")

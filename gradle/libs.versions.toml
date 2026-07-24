@@ -101,6 +101,7 @@ shizuku-api = { group = "dev.rikka.shizuku", name = "api", version.ref = "shizuk
 shizuku-provider = { group = "dev.rikka.shizuku", name = "provider", version.ref = "shizuku" }
 libsu = { group = "com.github.topjohnwu.libsu", name = "core", version.ref = "libsu" }
 floatingx = { group = "io.github.petterpx", name = "floatingx", version.ref = "floatingX" }
+floatingx-compose = { group = "io.github.petterpx", name = "floatingx-compose", version.ref = "floatingX" }
 sonner = { group = "io.github.dokar3", name = "sonner", version.ref = "sonner" }
 timber = { group = "com.jakewharton.timber", name = "timber", version.ref = "timber" }
 okhttp = { group = "com.squareup.okhttp3", name = "okhttp", version.ref = "okhttp" }
