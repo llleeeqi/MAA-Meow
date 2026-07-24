@@ -76,6 +76,8 @@ import com.aliothmoon.maameow.schedule.service.ScheduleAlarmManager
 import com.aliothmoon.maameow.schedule.service.ScheduleTriggerLogger
 import com.aliothmoon.maameow.utils.CrashHandler
 import com.aliothmoon.maameow.utils.log.LogTreeHolder
+import com.aliothmoon.maameow.web.RemoteWebServerManager
+import com.aliothmoon.maameow.web.RemoteWebSettings
 import okhttp3.OkHttpClient
 import org.koin.core.module.dsl.singleOf
 import org.koin.dsl.bind
@@ -102,6 +104,8 @@ val appModule = module {
 
 
     singleOf(::AppSettingsManager)
+    singleOf(::RemoteWebSettings)
+    singleOf(::RemoteWebServerManager)
     singleOf(::BackgroundImageStore)
     singleOf(::AchievementRepository)
     singleOf(::AchievementReporter)

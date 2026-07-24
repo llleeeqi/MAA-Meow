@@ -16,6 +16,7 @@ import com.aliothmoon.maameow.schedule.service.ScheduleAlarmManager
 import com.aliothmoon.maameow.utils.CrashHandler
 import com.aliothmoon.maameow.utils.i18n.LocaleBootstrap
 import com.aliothmoon.maameow.utils.log.LogTreeHolder
+import com.aliothmoon.maameow.web.RemoteWebServerManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -41,6 +42,7 @@ class MaaApplication : Application() {
     private val treeHolder: LogTreeHolder by inject()
     private val scheduleRepository: ScheduleStrategyRepository by inject()
     private val scheduleAlarmManager: ScheduleAlarmManager by inject()
+    private val remoteWebServerManager: RemoteWebServerManager by inject()
     override fun onCreate() {
         super.onCreate()
         val app = this
@@ -64,6 +66,7 @@ class MaaApplication : Application() {
         gameMuteCoordinator.startAutoRestore()
         cleanCachedUpdateApks()
         doSyncScheduleAlarms()
+        remoteWebServerManager.startIfEnabled()
     }
 
     private fun cleanCachedUpdateApks() {

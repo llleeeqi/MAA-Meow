@@ -31,7 +31,7 @@ class ConfigBackupManager(
         prettyPrint = true
     }
 
-    suspend fun exportTo(outputStream: OutputStream) = withContext(Dispatchers.IO) {
+    suspend fun exportTo(outputStream: OutputStream, sanitize: Boolean = true) = withContext(Dispatchers.IO) {
         // 等待异步数据加载完成，避免导出空数据
         taskChainState.isLoaded.first { it }
         scheduleStrategyRepository.isLoaded.first { it }
@@ -39,9 +39,9 @@ class ConfigBackupManager(
         val backup = ConfigBackup(
             version = CURRENT_VERSION,
             exportedAt = LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME),
-            appSettings = appSettingsManager.settings.first().sanitized(),
-            notificationSettings = notificationSettingsManager.settings.first().sanitized(),
-            taskProfiles = taskChainState.profiles.value.map { it.sanitized() },
+            appSettings = appSettingsManager.settings.first().let { if (sanitize) it.sanitized() else it },
+            notificationSettings = notificationSettingsManager.settings.first().let { if (sanitize) it.sanitized() else it },
+            taskProfiles = taskChainState.profiles.value.map { if (sanitize) it.sanitized() else it },
             activeProfileId = taskChainState.activeProfileId.value,
             scheduleStrategies = scheduleStrategyRepository.strategies.value,
         )

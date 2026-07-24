@@ -93,6 +93,8 @@ import com.aliothmoon.maameow.theme.MaaDesignTokens
 import com.aliothmoon.maameow.utils.Misc
 import com.aliothmoon.maameow.utils.i18n.LocaleBootstrap.resolveSelectedLanguage
 import com.aliothmoon.maameow.utils.i18n.resolve
+import com.aliothmoon.maameow.web.RemoteWebServerManager
+import com.aliothmoon.maameow.web.RemoteWebSettings
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -109,6 +111,9 @@ fun SettingsView(
     resourceInitService: ResourceInitService = koinInject(),
     achievementReporter: AchievementReporter = koinInject(),
 ) {
+    val remoteWebSettings: RemoteWebSettings = koinInject()
+    val remoteWebServerManager: RemoteWebServerManager = koinInject()
+    val remoteWebConfig by remoteWebSettings.config.collectAsStateWithLifecycle()
     val resourceInitState by resourceInitService.state.collectAsStateWithLifecycle()
     val debugMode by viewModel.debugMode.collectAsStateWithLifecycle()
     val autoCheckUpdate by viewModel.autoCheckUpdate.collectAsStateWithLifecycle()
@@ -189,6 +194,69 @@ fun SettingsView(
     var showReInitConfirm by remember { mutableStateOf(false) }
     var showDebugModeConfirm by remember { mutableStateOf(false) }
     var showExportSheet by remember { mutableStateOf(false) }
+    var showRemoteWebSettings by remember { mutableStateOf(false) }
+    var remoteWebEnabled by remember { mutableStateOf(false) }
+    var remoteWebPort by remember { mutableStateOf("8787") }
+    var remoteWebPassword by remember { mutableStateOf("") }
+
+    LaunchedEffect(showRemoteWebSettings) {
+        if (showRemoteWebSettings) {
+            remoteWebEnabled = remoteWebConfig.enabled
+            remoteWebPort = remoteWebConfig.port.toString()
+            remoteWebPassword = remoteWebConfig.password
+        }
+    }
+
+    if (showRemoteWebSettings) {
+        AdaptiveTaskPromptDialog(
+            visible = true,
+            title = "局域网 Web 管理",
+            message = "开启后可通过浏览器编辑完整配置。仅限受信任局域网使用。",
+            confirmText = "保存",
+            dismissText = stringResource(R.string.common_cancel),
+            onConfirm = {
+                remoteWebSettings.save(remoteWebEnabled, remoteWebPort, remoteWebPassword)
+                    .onSuccess { savedConfig ->
+                        remoteWebServerManager.applySettings()
+                            .onSuccess {
+                                Toast.makeText(context, "已保存，服务 ${if (savedConfig.enabled) "已启动" else "已关闭"}", Toast.LENGTH_SHORT).show()
+                                showRemoteWebSettings = false
+                            }
+                            .onFailure { error ->
+                                Toast.makeText(context, error.message ?: "服务启动失败", Toast.LENGTH_SHORT).show()
+                            }
+                    }
+                    .onFailure {
+                        Toast.makeText(context, it.message ?: "保存失败", Toast.LENGTH_SHORT).show()
+                    }
+            },
+            onDismissRequest = { showRemoteWebSettings = false },
+            content = {
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text("启用 Web 服务", modifier = Modifier.weight(1f))
+                        Switch(checked = remoteWebEnabled, onCheckedChange = { remoteWebEnabled = it })
+                    }
+                    ITextField(
+                        value = remoteWebPort,
+                        onValueChange = { remoteWebPort = it },
+                        label = "端口",
+                        placeholder = "8787",
+                    )
+                    ITextField(
+                        value = remoteWebPassword,
+                        onValueChange = { remoteWebPassword = it },
+                        label = "访问密码（至少 8 位）",
+                        placeholder = "不要使用常见密码",
+                    )
+                    Text(
+                        "访问地址：http://手机局域网IP:$remoteWebPort",
+                        style = MaterialTheme.typography.bodySmall,
+                    )
+                }
+            }
+        )
+    }
 
     LogExportController(
         sheetVisible = showExportSheet,
@@ -673,6 +741,23 @@ fun SettingsView(
                         contentColor = contentColor
                     ) {
                         importLauncher.launch(arrayOf("application/json"))
+                    }
+                }
+            }
+
+            item {
+                SectionHeader("远程管理")
+                SettingsGroupCard {
+                    SettingClickItem(
+                        title = "局域网 Web 管理",
+                        description = if (remoteWebConfig.enabled) {
+                            "已开启，端口 ${remoteWebConfig.port}"
+                        } else {
+                            "关闭；开启后可在浏览器编辑完整配置"
+                        },
+                        contentColor = contentColor,
+                    ) {
+                        showRemoteWebSettings = true
                     }
                 }
             }

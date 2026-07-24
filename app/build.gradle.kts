@@ -215,6 +215,7 @@ dependencies {
 
     // Kotlin Serialization
     implementation(libs.kotlinx.serialization.json)
+    implementation(libs.nanohttpd)
 
     testImplementation(libs.junit)
     testImplementation(libs.mockk)
